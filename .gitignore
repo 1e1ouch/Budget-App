@@ -33,3 +33,7 @@ lib/generated_plugin_registrant.dart
 !.vscode/settings.json
 !.vscode/launch.json
 !.vscode/tasks.json
+
+# Editor settings
+.vscode/
+.idea/
