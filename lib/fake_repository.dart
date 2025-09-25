@@ -1,8 +1,10 @@
 import 'dart:async';
+
 import 'models.dart';
 import 'repository.dart';
 
 class FakeRepository implements Repository {
+  // --- sample transactions
   final _seed = <Txn>[
     Txn(
       id: 't1',
@@ -22,7 +24,7 @@ class FakeRepository implements Repository {
       id: 't3',
       date: DateTime.now().subtract(const Duration(days: 3)),
       merchant: 'Coffee',
-      amount: -4.5,
+      amount: -4.50,
       category: Category.dining,
     ),
     Txn(
@@ -32,6 +34,14 @@ class FakeRepository implements Repository {
       amount: 1800,
       category: Category.transfer,
     ),
+  ];
+
+  // --- sample budgets (v1 defaults)
+  final _budgets = <BudgetLine>[
+    const BudgetLine(category: Category.groceries, limit: 300),
+    const BudgetLine(category: Category.dining, limit: 150),
+    const BudgetLine(category: Category.rent, limit: 1200),
+    const BudgetLine(category: Category.transfer, limit: 0),
   ];
 
   @override
@@ -64,5 +74,12 @@ class FakeRepository implements Repository {
     await Future.delayed(const Duration(milliseconds: 150));
     _seed.add(txn);
     return txn;
+  }
+
+  // return a copy of the budget lines
+  @override
+  Future<List<BudgetLine>> fetchBudgets() async {
+    await Future.delayed(const Duration(milliseconds: 200));
+    return List<BudgetLine>.from(_budgets);
   }
 }

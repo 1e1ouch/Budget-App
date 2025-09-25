@@ -3,6 +3,7 @@ class Category {
   final String name;
   const Category(this.id, this.name);
 
+  // Common categories we’ll reuse across the app
   static const groceries = Category('cat_groceries', 'Groceries');
   static const dining = Category('cat_dining', 'Dining');
   static const rent = Category('cat_rent', 'Rent');
@@ -34,5 +35,14 @@ class MonthlyTotals {
   final double income;
   final double spending;
   MonthlyTotals({required this.income, required this.spending});
+
   double get net => income - spending;
+}
+
+/// a single budget row (category + monthly limit)
+class BudgetLine {
+  final Category category;
+  final double limit;
+
+  const BudgetLine({required this.category, required this.limit});
 }
