@@ -37,10 +37,10 @@ class HomeShell extends StatefulWidget {
 class _HomeShellState extends State<HomeShell> {
   int _index = 0;
 
-  // real screens for Home & Transactions, placeholders for the rest
+  // real screens for Home, Transactions, Budget, placeholders for the rest
   final List<Widget> _pages = const [
     DashboardScreen(),
-    _PlaceholderPage(title: 'Budget'),
+    BudgetScreen(),
     TransactionsScreen(),
     _PlaceholderPage(title: 'Goals'),
     _PlaceholderPage(title: 'Profile'),
@@ -105,6 +105,93 @@ class _PlaceholderPage extends StatelessWidget {
 }
 
 /// real screens below
+class BudgetScreen extends StatelessWidget {
+  const BudgetScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final app = context.watch<AppState>();
+    if (app.loading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    String money(num v) => '\$${v.toStringAsFixed(2)}';
+
+    // content only (no inner scaffold/appbar)
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Summary row
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Budgeted: ${money(app.totalBudgetLimit)}',
+                style: Theme.of(context).textTheme.bodyLarge,
+              ),
+              Text(
+                'Spent: ${money(app.totalBudgetSpent)}',
+                style: Theme.of(context).textTheme.bodyLarge,
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text('Remaining: ${money(app.totalBudgetRemaining)}'),
+          const SizedBox(height: 16),
+
+          // Per-category list
+          Expanded(
+            child: ListView.separated(
+              itemCount: app.budgets.length,
+              separatorBuilder: (_, __) => const Divider(height: 1),
+              itemBuilder: (_, i) {
+                final line = app.budgets[i];
+                final spent = app.spentForCategory(line.category.id);
+                final limit = line.limit;
+                final pct = limit == 0 ? 0.0 : (spent / limit).clamp(0.0, 1.0);
+                final over = spent > limit;
+
+                return ListTile(
+                  title: Text(line.category.name),
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 6),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(6),
+                        child: LinearProgressIndicator(
+                          value: pct,
+                          minHeight: 8,
+                          color: over
+                              ? Colors.red
+                              : Theme.of(context).colorScheme.primary,
+                          backgroundColor: Theme.of(
+                            context,
+                          ).colorScheme.surfaceVariant,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text('${money(spent)} of ${money(limit)} spent'),
+                    ],
+                  ),
+                  trailing: Text(
+                    over ? '-${money(spent - limit)}' : money(limit - spent),
+                    style: TextStyle(
+                      color: over ? Colors.red : Colors.green,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
