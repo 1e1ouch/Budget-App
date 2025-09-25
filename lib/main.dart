@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'app_state.dart';
+import 'fake_repository.dart';
+import 'models.dart';
 
 void main() => runApp(const BudgetApp());
 
@@ -7,13 +11,18 @@ class BudgetApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Blue Budget',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.indigo),
-        useMaterial3: true,
+    // provide app state to the whole app
+    return ChangeNotifierProvider(
+      create: (_) => AppState(FakeRepository())..loadInitial(),
+      child: MaterialApp(
+        title: 'Blue Budget',
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(seedColor: Colors.indigo),
+          useMaterial3: true,
+        ),
+        home: const HomeShell(),
       ),
-      home: const HomeShell(),
     );
   }
 }
@@ -28,10 +37,11 @@ class HomeShell extends StatefulWidget {
 class _HomeShellState extends State<HomeShell> {
   int _index = 0;
 
-  final _pages = const [
-    _PlaceholderPage(title: 'Dashboard'),
+  // real screens for Home & Transactions, placeholders for the rest
+  final List<Widget> _pages = const [
+    DashboardScreen(),
     _PlaceholderPage(title: 'Budget'),
-    _PlaceholderPage(title: 'Transactions'),
+    TransactionsScreen(),
     _PlaceholderPage(title: 'Goals'),
     _PlaceholderPage(title: 'Profile'),
   ];
@@ -90,6 +100,103 @@ class _PlaceholderPage extends StatelessWidget {
         '$title (placeholder)',
         style: Theme.of(context).textTheme.headlineMedium,
       ),
+    );
+  }
+}
+
+/// real screens below
+
+class DashboardScreen extends StatelessWidget {
+  const DashboardScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final app = context.watch<AppState>();
+    if (app.loading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    String money(double v) => '\$${v.toStringAsFixed(2)}';
+
+    // content only (no inner scaffold/appbar)
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Balance: ${money(app.monthly.net)}',
+            style: Theme.of(context).textTheme.headlineSmall,
+          ),
+          const SizedBox(height: 4),
+          Text('This month spent: ${money(app.monthly.spending)}'),
+          const SizedBox(height: 24),
+          Text(
+            'Recent transactions',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: 8),
+          Expanded(
+            child: ListView.separated(
+              itemCount: app.recent.length,
+              separatorBuilder: (_, __) => const Divider(height: 1),
+              itemBuilder: (_, i) {
+                final t = app.recent[i];
+                return ListTile(
+                  dense: true,
+                  title: Text(t.merchant),
+                  subtitle: Text(
+                    '${t.date.month}/${t.date.day}/${t.date.year}',
+                  ),
+                  trailing: Text(
+                    t.amountString,
+                    style: TextStyle(
+                      color: t.amount < 0 ? Colors.red : Colors.green,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class TransactionsScreen extends StatelessWidget {
+  const TransactionsScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final app = context.watch<AppState>();
+    if (app.loading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    final txns = app.monthTxns;
+
+    // content only (no inner scaffold/appBar)
+    return ListView.separated(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      itemCount: txns.length,
+      separatorBuilder: (_, __) => const Divider(height: 1),
+      itemBuilder: (_, i) {
+        final t = txns[i];
+        return ListTile(
+          title: Text(t.merchant),
+          subtitle: Text(
+            '${t.date.month}/${t.date.day}/${t.date.year} • ${t.category.name}',
+          ),
+          trailing: Text(
+            t.amountString,
+            style: TextStyle(
+              color: t.amount < 0 ? Colors.red : Colors.green,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        );
+      },
     );
   }
 }
