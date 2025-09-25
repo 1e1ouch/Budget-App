@@ -1,30 +1,26 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
 import 'package:blue_budget/main.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets(
+    'shows Dashboard then navigates to Budget and Transactions tabs',
+    (tester) async {
+      // Build the app
+      await tester.pumpWidget(const BudgetApp());
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+      // Default screen is Dashboard
+      expect(find.text('Dashboard'), findsWidgets); // title + tab label
+      expect(find.text('Dashboard (placeholder)'), findsOneWidget);
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+      // Tap "Budget" tab
+      await tester.tap(find.text('Budget'));
+      await tester.pumpAndSettle();
+      expect(find.text('Budget (placeholder)'), findsOneWidget);
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
-  });
+      // Tap "Transactions" tab
+      await tester.tap(find.text('Transactions'));
+      await tester.pumpAndSettle();
+      expect(find.text('Transactions (placeholder)'), findsOneWidget);
+    },
+  );
 }
