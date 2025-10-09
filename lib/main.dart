@@ -208,32 +208,72 @@ class TransactionsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final app = context.watch<AppState>();
-    if (app.loading) {
-      return const Center(child: CircularProgressIndicator());
-    }
+    if (app.loading) return const Center(child: CircularProgressIndicator());
     final txns = app.monthTxns;
 
-    // content only
     return ListView.separated(
       padding: const EdgeInsets.only(top: 8),
       itemCount: txns.length,
       separatorBuilder: (_, __) => const Divider(height: 1),
       itemBuilder: (_, i) {
         final t = txns[i];
-        return ListTile(
-          title: Text(t.merchant),
-          subtitle: Text(
-            '${t.date.month}/${t.date.day}/${t.date.year} • ${t.category.name}',
+        return Dismissible(
+          key: ValueKey(t.id),
+          direction: DismissDirection.endToStart,
+          background: Container(
+            alignment: Alignment.centerRight,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            color: Colors.red.withOpacity(0.85),
+            child: const Icon(Icons.delete, color: Colors.white),
           ),
-          trailing: Text(
-            t.amountString,
-            style: TextStyle(
-              color: t.amount < 0 ? Colors.red : Colors.green,
-              fontWeight: FontWeight.w600,
+          confirmDismiss: (_) async {
+            return await showDialog<bool>(
+                  context: context,
+                  builder: (_) => AlertDialog(
+                    title: const Text('Delete transaction?'),
+                    content: Text(
+                      'Remove "${t.merchant}" for ${t.amountString}?',
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        child: const Text('Cancel'),
+                      ),
+                      FilledButton(
+                        onPressed: () => Navigator.pop(context, true),
+                        child: const Text('Delete'),
+                      ),
+                    ],
+                  ),
+                ) ??
+                false;
+          },
+          onDismissed: (_) => context.read<AppState>().deleteTxn(t.id),
+          child: ListTile(
+            onTap: () => _openAddTxnSheet(context, existing: t),
+            title: Text(t.merchant),
+            subtitle: Text(
+              '${t.date.month}/${t.date.day}/${t.date.year} • ${t.category.name}',
+            ),
+            trailing: Text(
+              t.amountString,
+              style: TextStyle(
+                color: t.amount < 0 ? Colors.red : Colors.green,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         );
       },
+    );
+  }
+
+  void _openAddTxnSheet(BuildContext context, {Txn? existing}) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      builder: (_) => _AddTxnSheet(existing: existing),
     );
   }
 }
@@ -327,7 +367,8 @@ class BudgetScreen extends StatelessWidget {
 }
 
 class _AddTxnSheet extends StatefulWidget {
-  const _AddTxnSheet({super.key});
+  final Txn? existing; // null = create, not null = edit
+  const _AddTxnSheet({super.key, this.existing});
 
   @override
   State<_AddTxnSheet> createState() => _AddTxnSheetState();
@@ -335,11 +376,24 @@ class _AddTxnSheet extends StatefulWidget {
 
 class _AddTxnSheetState extends State<_AddTxnSheet> {
   final _formKey = GlobalKey<FormState>();
-  final _merchant = TextEditingController();
-  final _amount = TextEditingController();
-  DateTime _date = DateTime.now();
-  Category _cat = Category.groceries;
-  bool _isExpense = true;
+  late final TextEditingController _merchant;
+  late final TextEditingController _amount;
+  late DateTime _date;
+  late Category _cat;
+  late bool _isExpense;
+
+  @override
+  void initState() {
+    super.initState();
+    final e = widget.existing;
+    _merchant = TextEditingController(text: e?.merchant ?? '');
+    _amount = TextEditingController(
+      text: e == null ? '' : e.amount.abs().toStringAsFixed(2),
+    );
+    _date = e?.date ?? DateTime.now();
+    _cat = e?.category ?? Category.groceries;
+    _isExpense = e == null ? true : e.amount < 0;
+  }
 
   @override
   void dispose() {
@@ -351,12 +405,9 @@ class _AddTxnSheetState extends State<_AddTxnSheet> {
   @override
   Widget build(BuildContext context) {
     final bottom = MediaQuery.of(context).viewInsets.bottom;
-    const cats = [
-      Category.groceries,
-      Category.dining,
-      Category.rent,
-      Category.transfer,
-    ];
+    const cats = Category.all;
+
+    final isEdit = widget.existing != null;
 
     return Padding(
       padding: EdgeInsets.only(
@@ -373,9 +424,12 @@ class _AddTxnSheetState extends State<_AddTxnSheet> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
-                  'Add transaction',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                Text(
+                  isEdit ? 'Edit transaction' : 'Add transaction',
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 IconButton(
                   icon: const Icon(Icons.close),
@@ -465,7 +519,7 @@ class _AddTxnSheetState extends State<_AddTxnSheet> {
             FilledButton.icon(
               onPressed: _submit,
               icon: const Icon(Icons.check),
-              label: const Text('Save'),
+              label: Text(isEdit ? 'Update' : 'Save'),
             ),
           ],
         ),
@@ -479,15 +533,21 @@ class _AddTxnSheetState extends State<_AddTxnSheet> {
     final parsed = double.parse(_amount.text.trim());
     final amt = _isExpense ? -parsed : parsed;
 
+    final existing = widget.existing;
     final txn = Txn(
-      id: 't${DateTime.now().microsecondsSinceEpoch}',
+      id: existing?.id ?? 't${DateTime.now().microsecondsSinceEpoch}',
       date: _date,
       merchant: _merchant.text.trim(),
       amount: amt,
       category: _cat,
     );
 
-    context.read<AppState>().addTxn(txn);
+    final app = context.read<AppState>();
+    if (existing == null) {
+      app.addTxn(txn);
+    } else {
+      app.updateTxn(txn);
+    }
     Navigator.pop(context);
   }
 }

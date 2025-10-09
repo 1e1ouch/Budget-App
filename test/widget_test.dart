@@ -1,8 +1,10 @@
+import 'package:flutter_test/flutter_test.dart';
 import 'package:blue_budget/repository.dart';
 import 'package:blue_budget/models.dart';
+import 'package:blue_budget/app_state.dart';
 
 class _MemoryRepo implements Repository {
-  final _txns = <Txn>[
+  final List<Txn> _txns = <Txn>[
     Txn(
       id: 't1',
       date: DateTime.now(),
@@ -30,7 +32,8 @@ class _MemoryRepo implements Repository {
   Future<List<Txn>> fetchTransactions({required DateTime month}) async {
     return _txns
         .where((t) => t.date.year == month.year && t.date.month == month.month)
-        .toList();
+        .toList()
+      ..sort((a, b) => b.date.compareTo(a.date));
   }
 
   @override
@@ -52,10 +55,69 @@ class _MemoryRepo implements Repository {
   }
 
   @override
+  Future<Txn> updateTransaction(Txn txn) async {
+    final i = _txns.indexWhere((t) => t.id == txn.id);
+    if (i >= 0) {
+      _txns[i] = txn;
+    } else {
+      _txns.add(txn); // upsert behavior for safety in tests
+    }
+    return txn;
+  }
+
+  @override
+  Future<void> deleteTransaction(String id) async {
+    _txns.removeWhere((t) => t.id == id);
+  }
+
+  @override
   Future<List<BudgetLine>> fetchBudgets() async => _budgets;
 
   @override
   Future<void> saveBudgets(List<BudgetLine> lines) async {
     _budgets = List.of(lines);
   }
+}
+
+void main() {
+  test('AppState loads and computes monthly totals', () async {
+    final repo = _MemoryRepo();
+    final app = AppState(repo);
+
+    await app.loadInitial();
+
+    expect(app.loading, false);
+    expect(app.monthTxns.isNotEmpty, true);
+    expect(app.monthly.income, greaterThan(0)); // paycheck present
+    expect(app.monthly.spending, greaterThan(0)); // groceries present
+
+    // add → update totals
+    final newTxn = Txn(
+      id: 't_new',
+      date: DateTime.now(),
+      merchant: 'Coffee',
+      amount: -3.50,
+      category: Category.dining,
+    );
+    await app.addTxn(newTxn);
+    expect(app.monthTxns.any((t) => t.id == 't_new'), true);
+
+    // edit
+    final updated = Txn(
+      id: 't_new',
+      date: newTxn.date,
+      merchant: 'Coffee Shop',
+      amount: -4.00,
+      category: Category.dining,
+    );
+    await app.updateTxn(updated);
+    expect(
+      app.monthTxns.firstWhere((t) => t.id == 't_new').merchant,
+      'Coffee Shop',
+    );
+
+    // delete
+    await app.deleteTxn('t_new');
+    expect(app.monthTxns.any((t) => t.id == 't_new'), false);
+  });
 }
