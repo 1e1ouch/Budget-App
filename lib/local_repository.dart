@@ -60,8 +60,6 @@ class LocalRepository implements Repository {
     }
   }
 
-  // -------- Repository API --------
-
   @override
   Future<List<Txn>> fetchTransactions({required DateTime month}) async {
     final list = _txns.values.cast<Map>().map(_txnFromMap).toList();
@@ -94,6 +92,18 @@ class LocalRepository implements Repository {
   }
 
   @override
+  Future<Txn> updateTransaction(Txn txn) async {
+    // overwrite by id
+    await _txns.put(txn.id, _txnToMap(txn));
+    return txn;
+  }
+
+  @override
+  Future<void> deleteTransaction(String id) async {
+    await _txns.delete(id);
+  }
+
+  @override
   Future<List<BudgetLine>> fetchBudgets() async {
     final list = _budgets.values.cast<Map>().map(_budgetFromMap).toList();
     return list;
@@ -106,8 +116,6 @@ class LocalRepository implements Repository {
       await _budgets.add(_budgetToMap(line));
     }
   }
-
-  // -------- helpers --------
 
   Map<String, dynamic> _txnToMap(Txn t) => {
     'id': t.id,
@@ -123,7 +131,7 @@ class LocalRepository implements Repository {
     date: DateTime.fromMillisecondsSinceEpoch(m['date'] as int),
     merchant: m['merchant'] as String,
     amount: (m['amount'] as num).toDouble(),
-    category: Category(m['catId'] as String, m['catName'] as String),
+    category: Category.fromId(m['catId'] as String, m['catName'] as String),
   );
 
   Map<String, dynamic> _budgetToMap(BudgetLine b) => {
@@ -133,7 +141,7 @@ class LocalRepository implements Repository {
   };
 
   BudgetLine _budgetFromMap(Map m) => BudgetLine(
-    category: Category(m['catId'] as String, m['catName'] as String),
+    category: Category.fromId(m['catId'] as String, m['catName'] as String),
     limit: (m['limit'] as num).toDouble(),
   );
 }

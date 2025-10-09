@@ -23,12 +23,7 @@ class _EditBudgetsScreenState extends State<EditBudgetsScreen> {
       );
     }
     // Ensure common categories always appear (in case budgets were empty)
-    for (final c in const [
-      Category.groceries,
-      Category.dining,
-      Category.rent,
-      Category.transfer,
-    ]) {
+    for (final c in Category.all) {
       _controllers.putIfAbsent(c.id, () => TextEditingController(text: '0'));
     }
   }
@@ -44,12 +39,7 @@ class _EditBudgetsScreenState extends State<EditBudgetsScreen> {
   @override
   Widget build(BuildContext context) {
     final app = context.watch<AppState>();
-    final cats = const [
-      Category.groceries,
-      Category.dining,
-      Category.rent,
-      Category.transfer,
-    ];
+    final cats = Category.all;
 
     return Scaffold(
       appBar: AppBar(
@@ -98,10 +88,5 @@ class _EditBudgetsScreenState extends State<EditBudgetsScreen> {
     if (mounted) Navigator.pop(context);
   }
 
-  List<Category> get _allCats => const [
-    Category.groceries,
-    Category.dining,
-    Category.rent,
-    Category.transfer,
-  ];
+  List<Category> get _allCats => Category.all;
 }

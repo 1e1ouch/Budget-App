@@ -8,19 +8,16 @@ class AppState extends ChangeNotifier {
 
   bool loading = true;
 
-  // Data for the current month
   late DateTime _month;
   MonthlyTotals monthly = MonthlyTotals(income: 0, spending: 0);
   List<Txn> _txns = <Txn>[];
   List<BudgetLine> _budgets = <BudgetLine>[];
 
-  // Public getters used by UI
   DateTime get month => _month;
   List<Txn> get monthTxns => _txns;
   List<Txn> get recent => _txns.take(20).toList();
   List<BudgetLine> get budgets => _budgets;
 
-  // ---- Derived budget numbers ----
   double get totalBudgetLimit =>
       _budgets.fold<double>(0, (s, b) => s + b.limit);
 
@@ -36,7 +33,6 @@ class AppState extends ChangeNotifier {
         .fold<double>(0, (s, t) => s + (-t.amount));
   }
 
-  // ---- Lifecycle ----
   Future<void> loadInitial() async {
     loading = true;
     notifyListeners();
@@ -54,7 +50,6 @@ class AppState extends ChangeNotifier {
       repo.fetchMonthlyTotals(month: _month),
       repo.fetchBudgets(),
     ]);
-
     _txns = results[0] as List<Txn>;
     monthly = results[1] as MonthlyTotals;
     _budgets = results[2] as List<BudgetLine>;
@@ -62,15 +57,30 @@ class AppState extends ChangeNotifier {
 
   Future<void> addTxn(Txn t) async {
     await repo.addTransaction(t);
-    // refresh month data (totals + txns)
-    _txns = await repo.fetchTransactions(month: _month);
-    monthly = await repo.fetchMonthlyTotals(month: _month);
-    notifyListeners();
+    await _refreshAfterMutation();
+  }
+
+  Future<void> updateTxn(Txn t) async {
+    // NEW
+    await repo.updateTransaction(t);
+    await _refreshAfterMutation();
+  }
+
+  Future<void> deleteTxn(String id) async {
+    // NEW
+    await repo.deleteTransaction(id);
+    await _refreshAfterMutation();
   }
 
   Future<void> saveBudgets(List<BudgetLine> lines) async {
     await repo.saveBudgets(lines);
     _budgets = await repo.fetchBudgets();
+    notifyListeners();
+  }
+
+  Future<void> _refreshAfterMutation() async {
+    _txns = await repo.fetchTransactions(month: _month);
+    monthly = await repo.fetchMonthlyTotals(month: _month);
     notifyListeners();
   }
 }
