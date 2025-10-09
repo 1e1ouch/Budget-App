@@ -56,7 +56,29 @@ class _HomeShellState extends State<HomeShell> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(_titleForIndex(_index)),
+        centerTitle: true,
+        // Month navigation centered in the title
+        title: Builder(
+          builder: (context) {
+            final app = context.watch<AppState>();
+            return Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  tooltip: 'Previous month',
+                  icon: const Icon(Icons.chevron_left),
+                  onPressed: () => context.read<AppState>().stepMonth(-1),
+                ),
+                Text(app.monthLabel),
+                IconButton(
+                  tooltip: 'Next month',
+                  icon: const Icon(Icons.chevron_right),
+                  onPressed: () => context.read<AppState>().stepMonth(1),
+                ),
+              ],
+            );
+          },
+        ),
         actions: [
           // Show "Edit budgets" action only on the Budget tab
           if (_index == 1)
@@ -114,9 +136,6 @@ class _HomeShellState extends State<HomeShell> {
           : null,
     );
   }
-
-  String _titleForIndex(int i) =>
-      ['Dashboard', 'Budget', 'Transactions', 'Goals', 'Profile'][i];
 
   void _openAddTxnSheet(BuildContext context) {
     showModalBottomSheet(
