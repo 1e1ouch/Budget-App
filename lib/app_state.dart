@@ -3,57 +3,74 @@ import 'models.dart';
 import 'repository.dart';
 
 class AppState extends ChangeNotifier {
-  AppState(this._repo);
-  final Repository _repo;
+  final Repository repo;
+  AppState(this.repo);
 
   bool loading = true;
 
-  // Current-month aggregates
+  // Data for the current month
+  late DateTime _month;
   MonthlyTotals monthly = MonthlyTotals(income: 0, spending: 0);
-  List<Txn> monthTxns = [];
-  List<Txn> recent = [];
+  List<Txn> _txns = <Txn>[];
+  List<BudgetLine> _budgets = <BudgetLine>[];
 
-  // Budgets (static list for v1)
-  List<BudgetLine> budgets = [];
+  // Public getters used by UI
+  DateTime get month => _month;
+  List<Txn> get monthTxns => _txns;
+  List<Txn> get recent => _txns.take(20).toList();
+  List<BudgetLine> get budgets => _budgets;
 
+  // ---- Derived budget numbers ----
+  double get totalBudgetLimit =>
+      _budgets.fold<double>(0, (s, b) => s + b.limit);
+
+  double get totalBudgetSpent =>
+      _budgets.fold<double>(0, (s, b) => s + spentForCategory(b.category.id));
+
+  double get totalBudgetRemaining =>
+      (totalBudgetLimit - totalBudgetSpent).clamp(0, double.infinity);
+
+  double spentForCategory(String catId) {
+    return _txns
+        .where((t) => t.amount < 0 && t.category.id == catId)
+        .fold<double>(0, (s, t) => s + (-t.amount));
+  }
+
+  // ---- Lifecycle ----
   Future<void> loadInitial() async {
     loading = true;
     notifyListeners();
 
-    final now = DateTime.now();
-    monthTxns = await _repo.fetchTransactions(month: now);
-    monthly = await _repo.fetchMonthlyTotals(month: now);
-    budgets = await _repo.fetchBudgets(); // load budgets
-    recent = monthTxns.take(10).toList();
+    _month = DateTime(DateTime.now().year, DateTime.now().month);
+    await _refreshAll();
 
     loading = false;
     notifyListeners();
   }
 
+  Future<void> _refreshAll() async {
+    final results = await Future.wait([
+      repo.fetchTransactions(month: _month),
+      repo.fetchMonthlyTotals(month: _month),
+      repo.fetchBudgets(),
+    ]);
+
+    _txns = results[0] as List<Txn>;
+    monthly = results[1] as MonthlyTotals;
+    _budgets = results[2] as List<BudgetLine>;
+  }
+
   Future<void> addTxn(Txn t) async {
-    await _repo.addTransaction(t);
-    await loadInitial();
+    await repo.addTransaction(t);
+    // refresh month data (totals + txns)
+    _txns = await repo.fetchTransactions(month: _month);
+    monthly = await repo.fetchMonthlyTotals(month: _month);
+    notifyListeners();
   }
 
-  /// Dollars spent in this month for a given category (positive value).
-  double spentForCategory(String categoryId) {
-    double total = 0;
-    for (final t in monthTxns) {
-      if (t.category.id == categoryId && t.amount < 0) {
-        total += -t.amount; // make expenses positive
-      }
-    }
-    return total;
+  Future<void> saveBudgets(List<BudgetLine> lines) async {
+    await repo.saveBudgets(lines);
+    _budgets = await repo.fetchBudgets();
+    notifyListeners();
   }
-
-  /// roll-up helpers for the Budget summary row.
-  double get totalBudgetLimit =>
-      budgets.fold<double>(0, (sum, b) => sum + b.limit);
-
-  double get totalBudgetSpent => budgets.fold<double>(
-    0,
-    (sum, b) => sum + spentForCategory(b.category.id),
-  );
-
-  double get totalBudgetRemaining => totalBudgetLimit - totalBudgetSpent;
 }

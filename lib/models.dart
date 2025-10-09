@@ -3,7 +3,6 @@ class Category {
   final String name;
   const Category(this.id, this.name);
 
-  // Common categories we’ll reuse across the app
   static const groceries = Category('cat_groceries', 'Groceries');
   static const dining = Category('cat_dining', 'Dining');
   static const rent = Category('cat_rent', 'Rent');
@@ -14,7 +13,7 @@ class Txn {
   final String id;
   final DateTime date;
   final String merchant;
-  final double amount; // negative = expense, positive = income
+  final double amount;
   final Category category;
 
   Txn({

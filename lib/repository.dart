@@ -5,4 +5,5 @@ abstract class Repository {
   Future<List<Txn>> fetchTransactions({required DateTime month});
   Future<Txn> addTransaction(Txn txn);
   Future<List<BudgetLine>> fetchBudgets();
+  Future<void> saveBudgets(List<BudgetLine> lines);
 }

@@ -1,26 +1,61 @@
-import 'package:flutter_test/flutter_test.dart';
-import 'package:blue_budget/main.dart';
+import 'package:blue_budget/repository.dart';
+import 'package:blue_budget/models.dart';
 
-void main() {
-  testWidgets(
-    'shows Dashboard then navigates to Budget and Transactions tabs',
-    (tester) async {
-      // Build the app
-      await tester.pumpWidget(const BudgetApp());
+class _MemoryRepo implements Repository {
+  final _txns = <Txn>[
+    Txn(
+      id: 't1',
+      date: DateTime.now(),
+      merchant: 'Whole Foods',
+      amount: -54.23,
+      category: Category.groceries,
+    ),
+    Txn(
+      id: 't2',
+      date: DateTime.now(),
+      merchant: 'Paycheck',
+      amount: 1800,
+      category: Category.transfer,
+    ),
+  ];
 
-      // Default screen is Dashboard
-      expect(find.text('Dashboard'), findsWidgets); // title + tab label
-      expect(find.text('Dashboard (placeholder)'), findsOneWidget);
+  List<BudgetLine> _budgets = const [
+    BudgetLine(category: Category.groceries, limit: 300),
+    BudgetLine(category: Category.dining, limit: 150),
+    BudgetLine(category: Category.rent, limit: 1200),
+    BudgetLine(category: Category.transfer, limit: 0),
+  ];
 
-      // Tap "Budget" tab
-      await tester.tap(find.text('Budget'));
-      await tester.pumpAndSettle();
-      expect(find.text('Budget (placeholder)'), findsOneWidget);
+  @override
+  Future<List<Txn>> fetchTransactions({required DateTime month}) async {
+    return _txns
+        .where((t) => t.date.year == month.year && t.date.month == month.month)
+        .toList();
+  }
 
-      // Tap "Transactions" tab
-      await tester.tap(find.text('Transactions'));
-      await tester.pumpAndSettle();
-      expect(find.text('Transactions (placeholder)'), findsOneWidget);
-    },
-  );
+  @override
+  Future<MonthlyTotals> fetchMonthlyTotals({required DateTime month}) async {
+    final txns = await fetchTransactions(month: month);
+    final income = txns
+        .where((t) => t.amount > 0)
+        .fold<double>(0, (s, t) => s + t.amount);
+    final spending = txns
+        .where((t) => t.amount < 0)
+        .fold<double>(0, (s, t) => s + (-t.amount));
+    return MonthlyTotals(income: income, spending: spending);
+  }
+
+  @override
+  Future<Txn> addTransaction(Txn txn) async {
+    _txns.add(txn);
+    return txn;
+  }
+
+  @override
+  Future<List<BudgetLine>> fetchBudgets() async => _budgets;
+
+  @override
+  Future<void> saveBudgets(List<BudgetLine> lines) async {
+    _budgets = List.of(lines);
+  }
 }
