@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'models.dart';
 import 'repository.dart';
+import 'package:intl/intl.dart';
 
 class AppState extends ChangeNotifier {
   final Repository repo;
@@ -82,5 +83,17 @@ class AppState extends ChangeNotifier {
     _txns = await repo.fetchTransactions(month: _month);
     monthly = await repo.fetchMonthlyTotals(month: _month);
     notifyListeners();
+  }
+
+  String get monthLabel => DateFormat('MMMM yyyy').format(_month);
+  Future<void> setMonth(DateTime m) async {
+    _month = DateTime(m.year, m.month);
+    await _refreshAll();
+    notifyListeners();
+  }
+
+  Future<void> stepMonth(int delta) async {
+    final m = DateTime(_month.year, _month.month + delta);
+    await setMonth(m);
   }
 }
