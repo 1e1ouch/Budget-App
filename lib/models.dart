@@ -66,3 +66,21 @@ class BudgetLine {
 
   const BudgetLine({required this.category, required this.limit});
 }
+
+class Goal {
+  final String id;
+  final String name;
+  final double target; // how much you want to save
+  final double saved; // how much saved so far
+  final DateTime? due; // optional due date
+
+  Goal({
+    required this.id,
+    required this.name,
+    required this.target,
+    required this.saved,
+    this.due,
+  });
+
+  double get pct => target <= 0 ? 0 : (saved / target).clamp(0, 1);
+}
