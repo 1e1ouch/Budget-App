@@ -37,3 +37,6 @@ lib/generated_plugin_registrant.dart
 # Editor settings
 .vscode/
 .idea/
+
+# local secrets
+server/.env
