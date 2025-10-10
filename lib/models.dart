@@ -3,7 +3,6 @@ class Category {
   final String name;
   const Category(this.id, this.name);
 
-  // Common categories (canonical singletons)
   static const groceries = Category('cat_groceries', 'Groceries');
   static const dining = Category('cat_dining', 'Dining');
   static const rent = Category('cat_rent', 'Rent');
@@ -11,7 +10,6 @@ class Category {
 
   static const all = <Category>[groceries, dining, rent, transfer];
 
-  // Prefer canonical constants when possible; otherwise create ad-hoc
   static Category fromId(String id, String name) {
     for (final c in all) {
       if (c.id == id) return c;
@@ -59,7 +57,6 @@ class MonthlyTotals {
   double get net => income - spending;
 }
 
-/// a single budget row (category + monthly limit)
 class BudgetLine {
   final Category category;
   final double limit;

@@ -10,7 +10,6 @@ abstract class Repository {
 
   Future<List<BudgetLine>> fetchBudgets();
   Future<void> saveBudgets(List<BudgetLine> lines);
-  // ---- Goals ----
   Future<List<Goal>> fetchGoals();
   Future<Goal> addGoal(Goal g);
   Future<Goal> updateGoal(Goal g);

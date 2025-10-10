@@ -50,12 +50,12 @@ class AppState extends ChangeNotifier {
       repo.fetchTransactions(month: _month),
       repo.fetchMonthlyTotals(month: _month),
       repo.fetchBudgets(),
-      repo.fetchGoals(), // NEW
+      repo.fetchGoals(),
     ]);
     _txns = results[0] as List<Txn>;
     monthly = results[1] as MonthlyTotals;
     _budgets = results[2] as List<BudgetLine>;
-    _goals = results[3] as List<Goal>; // NEW
+    _goals = results[3] as List<Goal>;
   }
 
   Future<void> addTxn(Txn t) async {
@@ -64,13 +64,11 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> updateTxn(Txn t) async {
-    // NEW
     await repo.updateTransaction(t);
     await _refreshAfterMutation();
   }
 
   Future<void> deleteTxn(String id) async {
-    // NEW
     await repo.deleteTransaction(id);
     await _refreshAfterMutation();
   }
@@ -123,5 +121,13 @@ class AppState extends ChangeNotifier {
   Future<void> deleteGoal(String id) async {
     await repo.deleteGoal(id);
     await refreshGoals();
+  }
+
+  Future<void> importTransactions(List<Txn> items) async {
+    for (final t in items) {
+      if (_txns.any((x) => x.id == t.id)) continue;
+      await repo.addTransaction(t);
+    }
+    await _refreshAfterMutation();
   }
 }

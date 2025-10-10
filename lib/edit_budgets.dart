@@ -22,7 +22,6 @@ class _EditBudgetsScreenState extends State<EditBudgetsScreen> {
         text: b.limit.toStringAsFixed(0),
       );
     }
-    // Ensure common categories always appear (in case budgets were empty)
     for (final c in Category.all) {
       _controllers.putIfAbsent(c.id, () => TextEditingController(text: '0'));
     }

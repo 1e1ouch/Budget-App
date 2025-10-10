@@ -5,6 +5,7 @@ import 'models.dart';
 import 'edit_budgets.dart';
 import 'local_repository.dart';
 import 'repository.dart';
+import 'plaid_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -48,8 +49,8 @@ class _HomeShellState extends State<HomeShell> {
     DashboardScreen(),
     BudgetScreen(),
     TransactionsScreen(),
-    GoalsScreen(), // <-- real Goals screen
-    _PlaceholderPage(title: 'Profile'),
+    GoalsScreen(),
+    ProfileScreen(),
   ];
 
   @override
@@ -145,17 +146,70 @@ class _HomeShellState extends State<HomeShell> {
   }
 }
 
-class _PlaceholderPage extends StatelessWidget {
-  final String title;
-  const _PlaceholderPage({required this.title});
+class ProfileScreen extends StatelessWidget {
+  const ProfileScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Text(
-        '$title (placeholder)',
-        style: Theme.of(context).textTheme.headlineMedium,
-      ),
+    final plaid = PlaidService(
+      // Android emulator: 10.0.2.2, iOS sim: localhost
+      Theme.of(context).platform == TargetPlatform.android
+          ? 'http://10.0.2.2:8080'
+          : 'http://localhost:8080',
+    );
+
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        Text('Profile', style: Theme.of(context).textTheme.headlineSmall),
+        const SizedBox(height: 8),
+        const Text(
+          'Connect a bank in Plaid Sandbox and import recent transactions.',
+        ),
+
+        const SizedBox(height: 24),
+        FilledButton.icon(
+          icon: const Icon(Icons.link),
+          label: const Text('Connect bank (Plaid Sandbox)'),
+          onPressed: () async {
+            try {
+              final ok = await plaid.openLinkAndExchange();
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(ok ? 'Bank connected.' : 'Link canceled'),
+                ),
+              );
+            } catch (e) {
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(SnackBar(content: Text('Error: $e')));
+            }
+          },
+        ),
+
+        const SizedBox(height: 12),
+        FilledButton.icon(
+          icon: const Icon(Icons.download),
+          label: const Text('Import recent transactions'),
+          onPressed: () async {
+            try {
+              final items = await plaid.fetchTransactionsMapped();
+              await context.read<AppState>().importTransactions(items);
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Imported ${items.length} transactions'),
+                  ),
+                );
+              }
+            } catch (e) {
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(SnackBar(content: Text('Error: $e')));
+            }
+          },
+        ),
+      ],
     );
   }
 }
@@ -564,7 +618,6 @@ class _AddTxnSheetState extends State<_AddTxnSheet> {
   }
 }
 
-/// GOALS (CRUD + progress)
 class GoalsScreen extends StatelessWidget {
   const GoalsScreen({super.key});
 

@@ -18,7 +18,6 @@ class LocalRepository implements Repository {
       await _seedDemo();
     }
 
-    // Seed an example goal if none exist
     if (_goals.isEmpty) {
       final demo = Goal(
         id: 'g1',
