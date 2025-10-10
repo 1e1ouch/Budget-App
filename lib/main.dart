@@ -48,7 +48,7 @@ class _HomeShellState extends State<HomeShell> {
     DashboardScreen(),
     BudgetScreen(),
     TransactionsScreen(),
-    _PlaceholderPage(title: 'Goals'),
+    GoalsScreen(), // <-- real Goals screen
     _PlaceholderPage(title: 'Profile'),
   ];
 
@@ -57,7 +57,7 @@ class _HomeShellState extends State<HomeShell> {
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
-        // Month navigation centered in the title
+        // month navigation in title
         title: Builder(
           builder: (context) {
             final app = context.watch<AppState>();
@@ -80,7 +80,6 @@ class _HomeShellState extends State<HomeShell> {
           },
         ),
         actions: [
-          // Show "Edit budgets" action only on the Budget tab
           if (_index == 1)
             IconButton(
               tooltip: 'Edit budgets',
@@ -126,7 +125,6 @@ class _HomeShellState extends State<HomeShell> {
         ],
       ),
 
-      // FAB only on Transactions tab
       floatingActionButton: _index == 2
           ? FloatingActionButton.extended(
               onPressed: () => _openAddTxnSheet(context),
@@ -174,7 +172,6 @@ class DashboardScreen extends StatelessWidget {
 
     String money(double v) => '\$${v.toStringAsFixed(2)}';
 
-    // content only (no inner scaffold)
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -309,13 +306,11 @@ class BudgetScreen extends StatelessWidget {
 
     String money(num v) => '\$${v.toStringAsFixed(2)}';
 
-    // content only
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Summary row
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -332,8 +327,6 @@ class BudgetScreen extends StatelessWidget {
           const SizedBox(height: 4),
           Text('Remaining: ${money(app.totalBudgetRemaining)}'),
           const SizedBox(height: 16),
-
-          // Per-category list
           Expanded(
             child: ListView.separated(
               itemCount: app.budgets.length,
@@ -566,6 +559,287 @@ class _AddTxnSheetState extends State<_AddTxnSheet> {
       app.addTxn(txn);
     } else {
       app.updateTxn(txn);
+    }
+    Navigator.pop(context);
+  }
+}
+
+/// GOALS (CRUD + progress)
+class GoalsScreen extends StatelessWidget {
+  const GoalsScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final app = context.watch<AppState>();
+    if (app.loading) return const Center(child: CircularProgressIndicator());
+    final goals = app.goals;
+
+    return Scaffold(
+      body: ListView.separated(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
+        itemCount: goals.length + 1,
+        separatorBuilder: (_, __) => const SizedBox(height: 12),
+        itemBuilder: (_, i) {
+          if (i == 0) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Goals', style: Theme.of(context).textTheme.headlineSmall),
+                const SizedBox(height: 8),
+                Text(
+                  'Saved: \$${app.totalGoalsSaved.toStringAsFixed(2)}'
+                  ' / \$${app.totalGoalsTarget.toStringAsFixed(2)}',
+                ),
+              ],
+            );
+          }
+          final g = goals[i - 1];
+          final pct = g.pct;
+          final remaining = (g.target - g.saved).clamp(0, double.infinity);
+          return Dismissible(
+            key: ValueKey(g.id),
+            direction: DismissDirection.endToStart,
+            background: Container(
+              alignment: Alignment.centerRight,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              color: Colors.red.withOpacity(0.85),
+              child: const Icon(Icons.delete, color: Colors.white),
+            ),
+            confirmDismiss: (_) async {
+              return await showDialog<bool>(
+                    context: context,
+                    builder: (_) => AlertDialog(
+                      title: const Text('Delete goal?'),
+                      content: Text('Remove "${g.name}"?'),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, false),
+                          child: const Text('Cancel'),
+                        ),
+                        FilledButton(
+                          onPressed: () => Navigator.pop(context, true),
+                          child: const Text('Delete'),
+                        ),
+                      ],
+                    ),
+                  ) ??
+                  false;
+            },
+            onDismissed: (_) => context.read<AppState>().deleteGoal(g.id),
+            child: ListTile(
+              onTap: () => _openEditGoal(context, existing: g),
+              title: Text(g.name),
+              subtitle: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 6),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(6),
+                    child: LinearProgressIndicator(
+                      value: pct,
+                      minHeight: 8,
+                      backgroundColor: Theme.of(
+                        context,
+                      ).colorScheme.surfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    '\$${g.saved.toStringAsFixed(2)} of \$${g.target.toStringAsFixed(2)}'
+                    '${g.due != null ? ' • due ${g.due!.month}/${g.due!.day}/${g.due!.year}' : ''}',
+                  ),
+                ],
+              ),
+              trailing: Text(
+                remaining <= 0 ? 'Done' : '\$${remaining.toStringAsFixed(2)}',
+                style: TextStyle(
+                  color: remaining <= 0 ? Colors.green : null,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => _openEditGoal(context),
+        icon: const Icon(Icons.add),
+        label: const Text('Add goal'),
+      ),
+    );
+  }
+
+  void _openEditGoal(BuildContext context, {Goal? existing}) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      builder: (_) => _EditGoalSheet(existing: existing),
+    );
+  }
+}
+
+class _EditGoalSheet extends StatefulWidget {
+  final Goal? existing;
+  const _EditGoalSheet({super.key, this.existing});
+
+  @override
+  State<_EditGoalSheet> createState() => _EditGoalSheetState();
+}
+
+class _EditGoalSheetState extends State<_EditGoalSheet> {
+  final _formKey = GlobalKey<FormState>();
+  late final TextEditingController _name;
+  late final TextEditingController _target;
+  late final TextEditingController _saved;
+  DateTime? _due;
+
+  @override
+  void initState() {
+    super.initState();
+    final e = widget.existing;
+    _name = TextEditingController(text: e?.name ?? '');
+    _target = TextEditingController(text: e?.target.toStringAsFixed(2) ?? '');
+    _saved = TextEditingController(text: e?.saved.toStringAsFixed(2) ?? '0');
+    _due = e?.due;
+  }
+
+  @override
+  void dispose() {
+    _name.dispose();
+    _target.dispose();
+    _saved.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bottom = MediaQuery.of(context).viewInsets.bottom;
+    final isEdit = widget.existing != null;
+
+    return Padding(
+      padding: EdgeInsets.only(
+        left: 16,
+        right: 16,
+        top: 16,
+        bottom: bottom + 16,
+      ),
+      child: Form(
+        key: _formKey,
+        child: ListView(
+          shrinkWrap: true,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  isEdit ? 'Edit goal' : 'Add goal',
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+
+            TextFormField(
+              controller: _name,
+              decoration: const InputDecoration(labelText: 'Name'),
+              validator: (v) =>
+                  (v == null || v.trim().isEmpty) ? 'Enter a name' : null,
+            ),
+            const SizedBox(height: 12),
+
+            TextFormField(
+              controller: _target,
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+              decoration: const InputDecoration(
+                labelText: 'Target amount',
+                prefixText: '\$',
+              ),
+              validator: (v) {
+                final d = double.tryParse(v ?? '');
+                if (d == null || d <= 0) return 'Enter a positive number';
+                return null;
+              },
+            ),
+            const SizedBox(height: 12),
+
+            TextFormField(
+              controller: _saved,
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+              decoration: const InputDecoration(
+                labelText: 'Already saved',
+                prefixText: '\$',
+              ),
+              validator: (v) {
+                final d = double.tryParse(v ?? '');
+                if (d == null || d < 0) return 'Enter 0 or more';
+                final t = double.tryParse(_target.text) ?? 0;
+                if (d > t) return 'Cannot exceed target';
+                return null;
+              },
+            ),
+            const SizedBox(height: 12),
+
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(Icons.event),
+              title: Text(
+                _due == null
+                    ? 'No due date'
+                    : '${_due!.month}/${_due!.day}/${_due!.year}',
+              ),
+              subtitle: const Text('Due date (optional)'),
+              onTap: () async {
+                final now = DateTime.now();
+                final picked = await showDatePicker(
+                  context: context,
+                  initialDate: _due ?? now,
+                  firstDate: DateTime(now.year - 1),
+                  lastDate: DateTime(now.year + 5),
+                );
+                if (picked != null) setState(() => _due = picked);
+              },
+            ),
+            const SizedBox(height: 16),
+
+            FilledButton.icon(
+              onPressed: _submit,
+              icon: const Icon(Icons.check),
+              label: Text(isEdit ? 'Update' : 'Save'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _submit() {
+    if (!_formKey.currentState!.validate()) return;
+    final id =
+        widget.existing?.id ?? 'g${DateTime.now().microsecondsSinceEpoch}';
+    final g = Goal(
+      id: id,
+      name: _name.text.trim(),
+      target: double.parse(_target.text.trim()),
+      saved: double.parse(_saved.text.trim()),
+      due: _due,
+    );
+    final app = context.read<AppState>();
+    if (widget.existing == null) {
+      app.addGoal(g);
+    } else {
+      app.updateGoal(g);
     }
     Navigator.pop(context);
   }

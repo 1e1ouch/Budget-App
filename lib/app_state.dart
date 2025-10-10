@@ -50,10 +50,12 @@ class AppState extends ChangeNotifier {
       repo.fetchTransactions(month: _month),
       repo.fetchMonthlyTotals(month: _month),
       repo.fetchBudgets(),
+      repo.fetchGoals(), // NEW
     ]);
     _txns = results[0] as List<Txn>;
     monthly = results[1] as MonthlyTotals;
     _budgets = results[2] as List<BudgetLine>;
+    _goals = results[3] as List<Goal>; // NEW
   }
 
   Future<void> addTxn(Txn t) async {
@@ -95,5 +97,31 @@ class AppState extends ChangeNotifier {
   Future<void> stepMonth(int delta) async {
     final m = DateTime(_month.year, _month.month + delta);
     await setMonth(m);
+  }
+
+  // ---- Goals ----
+  List<Goal> _goals = <Goal>[];
+  List<Goal> get goals => _goals;
+  double get totalGoalsTarget => _goals.fold(0, (s, g) => s + g.target);
+  double get totalGoalsSaved => _goals.fold(0, (s, g) => s + g.saved);
+
+  Future<void> refreshGoals() async {
+    _goals = await repo.fetchGoals();
+    notifyListeners();
+  }
+
+  Future<void> addGoal(Goal g) async {
+    await repo.addGoal(g);
+    await refreshGoals();
+  }
+
+  Future<void> updateGoal(Goal g) async {
+    await repo.updateGoal(g);
+    await refreshGoals();
+  }
+
+  Future<void> deleteGoal(String id) async {
+    await repo.deleteGoal(id);
+    await refreshGoals();
   }
 }

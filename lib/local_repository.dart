@@ -6,57 +6,76 @@ import 'repository.dart';
 class LocalRepository implements Repository {
   late Box _txns;
   late Box _budgets;
+  late Box _goals;
 
   Future<void> init() async {
     await Hive.initFlutter();
     _txns = await Hive.openBox('txns');
     _budgets = await Hive.openBox('budgets');
+    _goals = await Hive.openBox('goals');
 
-    if (_budgets.isEmpty) {
-      final seed = [
-        BudgetLine(category: Category.groceries, limit: 300),
-        BudgetLine(category: Category.dining, limit: 150),
-        BudgetLine(category: Category.rent, limit: 1200),
-        BudgetLine(category: Category.transfer, limit: 0),
-      ];
-      await saveBudgets(seed);
+    if (_budgets.isEmpty || _txns.isEmpty) {
+      await _seedDemo();
     }
 
-    if (_txns.isEmpty) {
-      final now = DateTime.now();
-      final seed = <Txn>[
-        Txn(
-          id: 't1',
-          date: now.subtract(const Duration(days: 1)),
-          merchant: 'Whole Foods',
-          amount: -54.23,
-          category: Category.groceries,
-        ),
-        Txn(
-          id: 't2',
-          date: now.subtract(const Duration(days: 2)),
-          merchant: 'Rent',
-          amount: -1200,
-          category: Category.rent,
-        ),
-        Txn(
-          id: 't3',
-          date: now.subtract(const Duration(days: 3)),
-          merchant: 'Coffee',
-          amount: -4.5,
-          category: Category.dining,
-        ),
-        Txn(
-          id: 't4',
-          date: now.subtract(const Duration(days: 4)),
-          merchant: 'Paycheck',
-          amount: 1800,
-          category: Category.transfer,
-        ),
-      ];
-      for (final t in seed) {
-        await _txns.put(t.id, _txnToMap(t));
-      }
+    // Seed an example goal if none exist
+    if (_goals.isEmpty) {
+      final demo = Goal(
+        id: 'g1',
+        name: 'Emergency Fund',
+        target: 1000,
+        saved: 250,
+        due: DateTime(DateTime.now().year, DateTime.now().month + 3, 1),
+      );
+      await addGoal(demo);
+    }
+  }
+
+  Future<void> _seedDemo() async {
+    await _budgets.clear();
+    await _txns.clear();
+
+    final budgets = [
+      BudgetLine(category: Category.groceries, limit: 300),
+      BudgetLine(category: Category.dining, limit: 150),
+      BudgetLine(category: Category.rent, limit: 1200),
+      BudgetLine(category: Category.transfer, limit: 0),
+    ];
+    await saveBudgets(budgets);
+
+    final now = DateTime.now();
+    final seed = <Txn>[
+      Txn(
+        id: 't1',
+        date: now.subtract(const Duration(days: 1)),
+        merchant: 'Whole Foods',
+        amount: -54.23,
+        category: Category.groceries,
+      ),
+      Txn(
+        id: 't2',
+        date: now.subtract(const Duration(days: 2)),
+        merchant: 'Rent',
+        amount: -1200,
+        category: Category.rent,
+      ),
+      Txn(
+        id: 't3',
+        date: now.subtract(const Duration(days: 3)),
+        merchant: 'Coffee',
+        amount: -4.5,
+        category: Category.dining,
+      ),
+      Txn(
+        id: 't4',
+        date: now.subtract(const Duration(days: 4)),
+        merchant: 'Paycheck',
+        amount: 1800,
+        category: Category.transfer,
+      ),
+    ];
+    for (final t in seed) {
+      await _txns.put(t.id, _txnToMap(t));
     }
   }
 
@@ -93,7 +112,6 @@ class LocalRepository implements Repository {
 
   @override
   Future<Txn> updateTransaction(Txn txn) async {
-    // overwrite by id
     await _txns.put(txn.id, _txnToMap(txn));
     return txn;
   }
@@ -116,6 +134,40 @@ class LocalRepository implements Repository {
       await _budgets.add(_budgetToMap(line));
     }
   }
+
+  @override
+  Future<void> resetDemoData() async {
+    await _seedDemo();
+  }
+
+  // ---- Goals ----
+  @override
+  Future<List<Goal>> fetchGoals() async {
+    final list = _goals.values.cast<Map>().map(_goalFromMap).toList();
+    list.sort(
+      (a, b) => (a.due ?? DateTime(2100)).compareTo(b.due ?? DateTime(2100)),
+    );
+    return list;
+  }
+
+  @override
+  Future<Goal> addGoal(Goal g) async {
+    await _goals.put(g.id, _goalToMap(g));
+    return g;
+  }
+
+  @override
+  Future<Goal> updateGoal(Goal g) async {
+    await _goals.put(g.id, _goalToMap(g));
+    return g;
+  }
+
+  @override
+  Future<void> deleteGoal(String id) async {
+    await _goals.delete(id);
+  }
+
+  // -------- helpers --------
 
   Map<String, dynamic> _txnToMap(Txn t) => {
     'id': t.id,
@@ -143,5 +195,23 @@ class LocalRepository implements Repository {
   BudgetLine _budgetFromMap(Map m) => BudgetLine(
     category: Category.fromId(m['catId'] as String, m['catName'] as String),
     limit: (m['limit'] as num).toDouble(),
+  );
+
+  Map<String, dynamic> _goalToMap(Goal g) => {
+    'id': g.id,
+    'name': g.name,
+    'target': g.target,
+    'saved': g.saved,
+    'due': g.due?.millisecondsSinceEpoch,
+  };
+
+  Goal _goalFromMap(Map m) => Goal(
+    id: m['id'] as String,
+    name: m['name'] as String,
+    target: (m['target'] as num).toDouble(),
+    saved: (m['saved'] as num).toDouble(),
+    due: m['due'] == null
+        ? null
+        : DateTime.fromMillisecondsSinceEpoch(m['due'] as int),
   );
 }
