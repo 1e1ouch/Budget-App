@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>[PROJECT ID] – [PROJECT TITLE]</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 16px;
+      box-sizing: border-box;
+    }
+
+    .page {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    h1, h2, h3 {
+      margin: 4px 0;
+    }
+
+    h1 {
+      font-size: 24px;
+    }
+
+    h2 {
+      font-size: 18px;
+    }
+
+    h3 {
+      font-size: 16px;
+      margin-top: 8px;
+    }
+
+    .top-row {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 12px;
+      align-items: start;
+    }
+
+    .card {
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      padding: 10px;
+    }
+
+    .project-meta p,
+    .course-info p {
+      margin: 2px 0;
+      font-size: 14px;
+    }
+
+    .bios {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .bio {
+      text-align: center;
+      font-size: 13px;
+    }
+
+    .bio img {
+      width: 80px;
+      height: 80px;
+      object-fit: cover;
+      border-radius: 50%;
+      border: 1px solid #aaa;
+      display: block;
+      margin: 0 auto 4px;
+    }
+
+    .links-list {
+      list-style: none;
+      padding-left: 0;
+      margin: 4px 0;
+      font-size: 14px;
+    }
+
+    .links-list li {
+      margin: 2px 0;
+    }
+
+    a {
+      text-decoration: none;
+      color: #0055aa;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    /* Keep everything tight so scrolling is less likely */
+    footer {
+      margin-top: 6px;
+      font-size: 11px;
+      color: #666;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+
+    <!-- Project ID / Color / Title -->
+    <section class="card project-meta">
+      <h1>[PROJECT ID] – [PROJECT COLOR] – [PROJECT TITLE]</h1>
+      <p><strong>Short Project Tagline:</strong> [One-sentence description of what your project does]</p>
+    </section>
+
+    <div class="top-row">
+      <!-- Bio Pictures and Names -->
+      <section class="card">
+        <h2>Project Team</h2>
+        <div class="bios">
+          <!-- Copy this .bio block for each teammate -->
+          <div class="bio">
+            <img src="[path/to/bio_pic_1.jpg]" alt="Team Member 1">
+            <div><strong>[Name 1]</strong></div>
+            <div>[Role / Responsibility]</div>
+          </div>
+
+          <div class="bio">
+            <img src="[path/to/bio_pic_2.jpg]" alt="Team Member 2">
+            <div><strong>[Name 2]</strong></div>
+            <div>[Role / Responsibility]</div>
+          </div>
+
+          <div class="bio">
+            <img src="[path/to/bio_pic_3.jpg]" alt="Team Member 3">
+            <div><strong>[Name 3]</strong></div>
+            <div>[Role / Responsibility]</div>
+          </div>
+          <!-- Add/remove bios as needed -->
+        </div>
+      </section>
+
+      <!-- Course / Semester / Year -->
+      <section class="card course-info">
+        <h2>Course Information</h2>
+        <p><strong>Course Number:</strong> [CS 4850]</p>
+        <p><strong>Semester:</strong> [Fall]</p>
+        <p><strong>Year:</strong> [2025]</p>
+        <p><strong>Instructor:</strong> [Instructor Name]</p>
+      </section>
+    </div>
+
+    <!-- Navigation Links to Documents (PDF), GitHub, Video -->
+    <section class="card">
+      <h2>Project Resources</h2>
+
+      <h3>Project Documents (PDF)</h3>
+      <ul class="links-list">
+        <li>
+          <a href="[path/to/final_report.pdf]" target="_blank">
+            Final Report (PDF)
+          </a>
+        </li>
+        <li>
+          <a href="[path/to/development_document.pdf]" target="_blank">
+            Development / STP Document (PDF)
+          </a>
+        </li>
+        <li>
+          <a href="[path/to/test_plan.pdf]" target="_blank">
+            Test Plan (PDF)
+          </a>
+        </li>
+        <!-- Add or rename links as required by your project -->
+      </ul>
+
+      <h3>Code Repository</h3>
+      <ul class="links-list">
+        <li>
+          <a href="[https://github.com/YourUserName/YourProjectRepo]" target="_blank">
+            Project GitHub Repository
+          </a>
+        </li>
+      </ul>
+
+      <h3>Final Presentation Video</h3>
+      <ul class="links-list">
+        <li>
+          <!-- Replace with your actual video link (YouTube, Vimeo, etc.) -->
+          <a href="[https://youtu.be/your_final_presentation_link]" target="_blank">
+            Watch Final Presentation Video
+          </a>
+        </li>
+      </ul>
+    </section>
+
+    <footer>
+      [Optional small footer text or leave blank]
+    </footer>
+  </div>
+</body>
+</html>
