@@ -1,216 +1,310 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>[PROJECT ID] – [PROJECT TITLE]</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 16px;
-      box-sizing: border-box;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blue Budget - CS 4850 Project</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-    .page {
-      max-width: 1100px;
-      margin: 0 auto;
-    }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: url('IMGtest6.jpg') no-repeat center center fixed;
+            background-size: cover;
+            padding: 30px 20px;
+            min-height: 100vh;
+        }
 
-    h1, h2, h3 {
-      margin: 4px 0;
-    }
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
 
-    h1 {
-      font-size: 24px;
-    }
+        .hero {
+            background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+            color: white;
+            padding: 50px 40px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
 
-    h2 {
-      font-size: 18px;
-    }
+        .hero h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
 
-    h3 {
-      font-size: 16px;
-      margin-top: 8px;
-    }
+        .hero p {
+            font-size: 1.1em;
+            opacity: 0.95;
+        }
 
-    .top-row {
-      display: grid;
-      grid-template-columns: 1.2fr 1fr;
-      gap: 12px;
-      align-items: start;
-    }
+        .content-wrapper {
+            display: flex;
+            gap: 25px;
+            margin-bottom: 25px;
+        }
 
-    .card {
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      padding: 10px;
-    }
+        .left-column {
+            flex: 2;
+        }
 
-    .project-meta p,
-    .course-info p {
-      margin: 2px 0;
-      font-size: 14px;
-    }
+        .right-column {
+            flex: 1;
+        }
 
-    .bios {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            margin-bottom: 25px;
+            transition: box-shadow 0.3s ease;
+        }
 
-    .bio {
-      text-align: center;
-      font-size: 13px;
-    }
+        .card:hover {
+            box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+        }
 
-    .bio img {
-      width: 80px;
-      height: 80px;
-      object-fit: cover;
-      border-radius: 50%;
-      border: 1px solid #aaa;
-      display: block;
-      margin: 0 auto 4px;
-    }
+        .card h2 {
+            color: #1e40af;
+            font-size: 1.4em;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e5e7eb;
+        }
 
-    .links-list {
-      list-style: none;
-      padding-left: 0;
-      margin: 4px 0;
-      font-size: 14px;
-    }
+        .team-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
 
-    .links-list li {
-      margin: 2px 0;
-    }
+        .team-member {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
 
-    a {
-      text-decoration: none;
-      color: #0055aa;
-    }
+        .team-member img {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: 3px solid #2563eb;
+            object-fit: cover;
+        }
 
-    a:hover {
-      text-decoration: underline;
-    }
+        .team-member-info strong {
+            display: block;
+            color: #1f2937;
+            font-size: 0.95em;
+            margin-bottom: 3px;
+        }
 
-    /* Keep everything tight so scrolling is less likely */
-    footer {
-      margin-top: 6px;
-      font-size: 11px;
-      color: #666;
-      text-align: center;
-    }
-  </style>
+        .team-member-info span {
+            color: #6b7280;
+            font-size: 0.85em;
+        }
+
+        .info-grid {
+            display: grid;
+            gap: 12px;
+        }
+
+        .info-item {
+            display: flex;
+            padding: 10px;
+            background: #f9fafb;
+            border-radius: 6px;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #2563eb;
+            min-width: 100px;
+        }
+
+        .info-value {
+            color: #374151;
+        }
+
+        .links-grid {
+            display: grid;
+            gap: 12px;
+        }
+
+        .link-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 18px;
+            background: #2563eb;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .link-item:hover {
+            background: #1e40af;
+            transform: translateX(5px);
+        }
+
+        .section-title {
+            font-size: 1em;
+            color: #6b7280;
+            margin: 20px 0 10px 0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+
+        footer {
+            text-align: center;
+            color: #6b7280;
+            margin-top: 30px;
+            padding: 20px;
+            font-size: 0.9em;
+        }
+
+        @media (max-width: 900px) {
+            .content-wrapper {
+                flex-direction: column;
+            }
+
+            .team-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .hero h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
 </head>
 <body>
-  <div class="page">
-
-    <!-- Project ID / Color / Title -->
-    <section class="card project-meta">
-      <h1>Sp - 26 - Blue Budget</h1>
-      <p><strong>Short Project Tagline:</strong> [One-sentence description of what your project does]</p>
-    </section>
-
-    <div class="top-row">
-      <!-- Bio Pictures and Names -->
-      <section class="card">
-        <h2>Project Team</h2>
-        <div class="bios">
-          <!-- Copy this .bio block for each teammate -->
-          <div class="bio">
-            <img src="ChrisL.jpg" alt="Chris L">
-            <div><strong>Chris L</strong></div>
-            <div>Team Member</div>
-          </div>
-
-          <div class="bio">
-            <img src="KevynL.png" alt="Kevyn L">
-            <div><strong>Kevyn L</strong></div>
-            <div>Team Member</div>
-          </div>
-
-          <div class="bio">
-            <img src="ZoeF.jpg" alt="Zoe F">
-            <div><strong>Zoe F</strong></div>
-            <div>Team Member</div>
-          </div>
-
-          <div class="bio">
-            <img src="SarbaniA.png" alt="Sarbani A">
-            <div><strong>Sarbani A</strong></div>
-            <div>Team Member</div>
-          </div>
-
-          <div class="bio">
-            <img src="CamenM.jpg" alt="Camen M">
-            <div><strong>Camen M</strong></div>
-            <div>Team Member</div>
-          </div>
-          <!-- Add/remove bios as needed -->
-        </div>
-      </section>
-
-      <!-- Course / Semester / Year -->
-      <section class="card course-info">
-        <h2>Course Information</h2>
-        <p><strong>Course Number:</strong> CS 4850</p>
-        <p><strong>Semester:</strong> Fall</p>
-        <p><strong>Year:</strong> 2025</p>
-        <p><strong>Instructor:</strong> Sharon Perry</p>
-      </section>
+<div class="container">
+    <div class="hero">
+        <h1>Blue Budget</h1>
+        <p>Sp-26 | A comprehensive budgeting solution for modern financial management</p>
     </div>
 
-    <!-- Navigation Links to Documents (PDF), GitHub, Video -->
-    <section class="card">
-      <h2>Project Resources</h2>
+    <div class="content-wrapper">
+        <div class="left-column">
+            <div class="card">
+                <h2>Project Team</h2>
+                <div class="team-grid">
+                    <div class="team-member">
+                        <img src="ChrisL.jpg" alt="Chris L">
+                        <div class="team-member-info">
+                            <strong>Chris L</strong>
+                            <span>Developer</span>
+                        </div>
+                    </div>
+                    <div class="team-member">
+                        <img src="KevynL.png" alt="Kevyn L">
+                        <div class="team-member-info">
+                            <strong>Kevyn L</strong>
+                            <span>Developer</span>
+                        </div>
+                    </div>
+                    <div class="team-member">
+                        <img src="ZoeF.jpg" alt="Zoe F">
+                        <div class="team-member-info">
+                            <strong>Zoe F</strong>
+                            <span>Developer</span>
+                        </div>
+                    </div>
+                    <div class="team-member">
+                        <img src="SarbaniA.png" alt="Sarbani A">
+                        <div class="team-member-info">
+                            <strong>Sarbani A</strong>
+                            <span>Developer</span>
+                        </div>
+                    </div>
+                    <div class="team-member">
+                        <img src="CamenM.jpg" alt="Camen M">
+                        <div class="team-member-info">
+                            <strong>Camen M</strong>
+                            <span>Developer</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-      <h3>Project Documents (PDF)</h3>
-      <ul class="links-list">
-        <li>
-          <a href="[path/to/final_report.pdf]" target="_blank">
-            Final Report (PDF)
-          </a>
-        </li>
-        <li>
-          <a href="Sp-26-BlueBudget-STP-STR.pdf" target="_blank">
-            Development / STP Document (PDF)
-          </a>
-        </li>
-        <li>
-          <a href="[path/to/test_plan.pdf]" target="_blank">
-            Test Plan (PDF)
-          </a>
-        </li>
-        <!-- Add or rename links as required by your project -->
-      </ul>
+            <div class="card">
+                <h2>Project Resources</h2>
 
-      <h3>Code Repository</h3>
-      <ul class="links-list">
-        <li>
-          <a href="[https://github.com/YourUserName/YourProjectRepo]" target="_blank">
-            Project GitHub Repository
-          </a>
-        </li>
-      </ul>
+                <div class="section-title">Documentation</div>
+                <div class="links-grid">
+                    <a href="[path/to/final_report.pdf]" class="link-item" target="_blank">
+                         Final Report
+                    </a>
+                    <a href="Sp-26-BlueBudget-STP-STR.pdf" class="link-item" target="_blank">
+                         Development / STP Document
+                    </a>
+                    <a href="[path/to/test_plan.pdf]" class="link-item" target="_blank">
+                         Test Plan
+                    </a>
+                </div>
 
-      <h3>Final Presentation Video</h3>
-      <ul class="links-list">
-        <li>
-          <!-- Replace with your actual video link (YouTube, Vimeo, etc.) -->
-          <a href="[https://youtu.be/your_final_presentation_link]" target="_blank">
-            Watch Final Presentation Video
-          </a>
-        </li>
-      </ul>
-    </section>
+                <div class="section-title">Code & Presentation</div>
+                <div class="links-grid">
+                    <a href="https://github.com/1e1ouch/Budget-App" class="link-item" target="_blank">
+                         GitHub Repository
+                    </a>
+                    <a href="[https://youtu.be/your_final_presentation_link]" class="link-item" target="_blank">
+                         Final Presentation Video
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="right-column">
+            <div class="card">
+                <h2>Course Information</h2>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="info-label">Course:</span>
+                        <span class="info-value">CS 4850</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Semester:</span>
+                        <span class="info-value">Fall 2025</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Instructor:</span>
+                        <span class="info-value">Sharon Perry</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <footer>
-      [Optional small footer text or leave blank]
+        CS 4850 - Fall 2025 - Blue Budget Project
     </footer>
-  </div>
+</div>
+
+<script>
+    // Smooth fade-in animation on page load
+    window.addEventListener('load', () => {
+        const elements = document.querySelectorAll('.hero, .card');
+        elements.forEach((el, index) => {
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(20px)';
+            setTimeout(() => {
+                el.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                el.style.opacity = '1';
+                el.style.transform = 'translateY(0)';
+            }, index * 100);
+        });
+    });
+</script>
 </body>
 </html>
-
-
-
-
