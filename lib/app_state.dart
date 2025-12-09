@@ -8,6 +8,10 @@ class AppState extends ChangeNotifier {
   AppState(this.repo);
 
   bool loading = true;
+  AppUser? currentUser;
+
+  bool get isLoggedIn => currentUser != null;
+
 
   late DateTime _month;
   MonthlyTotals monthly = MonthlyTotals(income: 0, spending: 0);
@@ -130,4 +134,40 @@ class AppState extends ChangeNotifier {
     }
     await _refreshAfterMutation();
   }
+
+  //  Authentication methods
+
+  Future<bool> signUp(String username, String password) async {
+    final user = await repo.createUser(
+      username: username,
+      password: password,
+    );
+
+    // If username already exists, fail
+    if (user == null) {
+      return false;
+    }
+
+    // Do NOT log them in automatically
+    return true;
+  }
+
+
+  Future<bool> login(String username, String password) async {
+    final user = await repo.login(
+      username: username,
+      password: password,
+    );
+    if (user == null) return false;
+
+    currentUser = user;
+    notifyListeners();
+    return true;
+  }
+
+  void logout() {
+    currentUser = null;
+    notifyListeners();
+  }
+
 }

@@ -6,6 +6,8 @@ import 'edit_budgets.dart';
 import 'local_repository.dart';
 import 'repository.dart';
 import 'plaid_service.dart';
+import 'login_screen.dart';
+import 'signup_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -22,18 +24,26 @@ class BudgetApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (_) => AppState(repo)..loadInitial(),
-      child: MaterialApp(
-        title: 'Blue Budget',
-        debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: Colors.indigo),
-          useMaterial3: true,
-        ),
-        home: const HomeShell(),
+      child: Consumer<AppState>(
+        builder: (context, appState, _) {
+          return MaterialApp(
+            title: 'Blue Budget',
+            debugShowCheckedModeBanner: false,
+            theme: ThemeData(
+              colorScheme: ColorScheme.fromSeed(seedColor: Colors.indigo),
+              useMaterial3: true,
+            ),
+            // If not logged in, show login screen; otherwise show dashboard shell
+            home: appState.isLoggedIn
+                ? const HomeShell()
+                : const LoginScreen(),
+          );
+        },
       ),
     );
   }
 }
+
 
 class HomeShell extends StatefulWidget {
   const HomeShell({super.key});

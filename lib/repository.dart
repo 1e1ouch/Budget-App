@@ -14,4 +14,15 @@ abstract class Repository {
   Future<Goal> addGoal(Goal g);
   Future<Goal> updateGoal(Goal g);
   Future<void> deleteGoal(String id);
+
+  // --- NEW: local auth ---
+  Future<AppUser?> createUser({
+    required String username,
+    required String password,
+  });
+
+  Future<AppUser?> login({
+    required String username,
+    required String password,
+  });
 }

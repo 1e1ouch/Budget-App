@@ -49,6 +49,17 @@ class Txn {
   }
 }
 
+class AppUser {
+  final String username;
+  final String password; // stored locally
+
+  AppUser({
+    required this.username,
+    required this.password,
+  });
+}
+
+
 class MonthlyTotals {
   final double income;
   final double spending;

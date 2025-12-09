@@ -7,12 +7,14 @@ class LocalRepository implements Repository {
   late Box _txns;
   late Box _budgets;
   late Box _goals;
+  late Box _users;
 
   Future<void> init() async {
     await Hive.initFlutter();
     _txns = await Hive.openBox('txns');
     _budgets = await Hive.openBox('budgets');
     _goals = await Hive.openBox('goals');
+    _users = await Hive.openBox('users');
 
     if (_budgets.isEmpty || _txns.isEmpty) {
       await _seedDemo();
@@ -213,4 +215,37 @@ class LocalRepository implements Repository {
         ? null
         : DateTime.fromMillisecondsSinceEpoch(m['due'] as int),
   );
+
+
+  @override
+  Future<AppUser?> createUser({
+    required String username,
+    required String password,
+  }) async {
+    // username already exists
+    if (_users.containsKey(username)) {
+      return null;
+    }
+
+    final data = {
+      'username': username,
+      'password': password,
+    };
+
+    await _users.put(username, data);
+    return AppUser(username: username, password: password);
+  }
+
+  @override
+  Future<AppUser?> login({
+    required String username,
+    required String password,
+  }) async {
+    final data = _users.get(username);
+    if (data == null) return null;
+    if (data['password'] != password) return null;
+
+    return AppUser(username: username, password: password);
+  }
+
 }
